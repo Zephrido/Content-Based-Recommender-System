@@ -1,5 +1,5 @@
 import os
-os.environ["USE_TF"] = "0"  # Force sentence-transformers to use PyTorch only
+os.environ["USE_TF"] = "0" 
 import tensorflow as tf
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Input, Dense
@@ -15,7 +15,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from fuzzywuzzy import process
 
 
-# ─── Page config & CSS ─────────────────────────────────────────
+# Page config & CSS
 st.set_page_config(page_title="Movie Recommender", layout="wide")
 st.markdown("<h1 style='text-align: center; color: #FFFFFF;'>🎬 Movie Recommender System</h1>", unsafe_allow_html=True)
 st.markdown("""
@@ -92,12 +92,12 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-# ─── API KEYS ───────────────────────────────────────────────────────────────────
-TMDB_API_KEY    = "8265bd1679663a7ea12ac168da84d2e8"
-OMDB_API_KEY    = "6c765ab5"
+# API KEYS 
+TMDB_API_KEY    = "your_key"
+OMDB_API_KEY    = your_key"
 TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/w500"
 
-# ─── Fetch helpers ───────────────────────────────────────────────────────────────
+# Fetch helpers 
 def fetch_poster_and_imdb(movie_id):
     url = f"https://api.themoviedb.org/3/movie/{movie_id}?api_key={TMDB_API_KEY}&language=en-US"
     resp = requests.get(url)
@@ -118,7 +118,7 @@ def fetch_imdb_rating(imdb_id):
     except:
         return None
 
-# ─── Data prep helpers ──────────────────────────────────────────────────────────
+# Data prep helpers 
 def parse_names(txt, top_n=None):
     try:
         arr = ast.literal_eval(txt)
@@ -137,7 +137,7 @@ def get_director(txt):
 def join_names(lst):
     return [n.replace(" ", "_") for n in lst]
 
-# ─── Load & vectorize ────────────────────────────────────────────────────────────
+# Load & vectorize
 @st.cache_data(show_spinner=False)
 def load_data():
     m = pd.read_csv("tmdb_5000_movies.csv")
@@ -155,11 +155,11 @@ def load_data():
                      df["overview"].apply(lambda x: x.split())
     df["tags"]     = df["tags"].apply(lambda x: " ".join(x).lower())
 
-    # ── TF-IDF ─────────────────────────────
+    # TF-IDF
     cv   = TfidfVectorizer(max_features=5000, stop_words="english")
     vecs = cv.fit_transform(df["tags"])
 
-    # ── SBERT Embeddings ─────────────────────────────
+    # SBERT Embedding
     sbert = SentenceTransformer('all-MiniLM-L6-v2')
     emb   = sbert.encode(df["tags"].tolist(), convert_to_tensor=True, show_progress_bar=False)
 
@@ -167,10 +167,10 @@ def load_data():
 
 df, cv, vectors, sbert_embs = load_data()
 
-# ─── Genre list for UI ───────────────────────────────
+#Genre list for UI
 genre_list = sorted({g.replace("_", " ") for genre_arr in df["genres"] for g in genre_arr})
 
-# ─── Recommendation logic with genre filtering ────────
+# Recommendation logic with genre filtering
 def recommend_movies(q, selected_genres):
     query = q.lower().strip()
     q_us  = query.replace(" ", "_")
@@ -200,7 +200,7 @@ def recommend_movies(q, selected_genres):
         ids = np.argsort(sim)[::-1][:8]
         res = filtered_df.iloc[ids]
     else:
-        st.info(f"🔍 Not exact title. Searching keywords, genres, cast & directors for **{query}**")
+        st.info(f"Not exact title. Searching keywords, genres, cast & directors for **{query}**")
         k = filtered_df[filtered_df["keywords"].apply(
             lambda arr: any(
                 query == kw.lower().replace("_", " ") or q_us == kw.lower()
@@ -233,7 +233,7 @@ def recommend_movies(q, selected_genres):
         res = res.drop_duplicates()
 
         if res.empty:
-            st.warning("❌ No exact/keyword/cast/director matches—using SBERT semantic search.")
+            st.warning("NO exact/keyword/cast/director matches—using SBERT semantic search.")
             sbert = SentenceTransformer('all-MiniLM-L6-v2')
             q_emb = sbert.encode([query], convert_to_tensor=True)
             sims  = util.pytorch_cos_sim(q_emb, filtered_embs)[0].cpu().numpy()
@@ -255,11 +255,11 @@ def recommend_movies(q, selected_genres):
     return out
 
 # UI
-st.markdown("#### 🔎 Search by title, keyword, cast, or description")
+st.markdown("#### Search by title, keyword, cast, or description")
 query = st.text_input("Movie search", "")
 
 selected_genres = st.multiselect(
-    "🎬 Filter by Genres (optional)", genre_list
+    "Filter by Genres (optional)", genre_list
 )
 
 
